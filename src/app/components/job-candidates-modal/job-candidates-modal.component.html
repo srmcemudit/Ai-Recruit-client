@@ -1,0 +1,469 @@
+<div
+  *ngIf="recruitService.isJobCandidatesModalOpen()"
+  class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-md overflow-hidden animate-fadeIn"
+>
+  <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-6xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+    
+    <!-- Modal Top Bar / Job Header -->
+    <div class="p-5 sm:p-6 border-b border-slate-800 bg-gradient-to-r from-slate-900 via-indigo-950/50 to-slate-900 shrink-0">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        
+        <!-- Left: Job Info & Switcher -->
+        <div class="space-y-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+              {{ selectedJob()?.department || 'Engineering' }}
+            </span>
+
+            <span
+              [class]="selectedJob()?.status === 'Urgent'
+                ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                : 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'"
+            >
+              {{ selectedJob()?.status || 'Active' }} Open Opening
+            </span>
+
+            <span class="text-xs text-slate-400 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {{ selectedJob()?.location }}
+            </span>
+
+            <span class="text-xs font-semibold text-indigo-400">
+              {{ selectedJob()?.salaryRange }}
+            </span>
+          </div>
+
+          <!-- Job Title with quick job switcher -->
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">
+              {{ selectedJob()?.title || 'Job Candidates' }}
+            </h2>
+
+            <!-- Switch Job Dropdown -->
+            <div class="relative inline-block text-left">
+              <select
+                [ngModel]="selectedJob()?.id"
+                (ngModelChange)="onSelectJob($event)"
+                class="bg-slate-800/90 text-slate-300 text-xs font-medium rounded-xl px-3 py-1.5 border border-slate-700/80 hover:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+              >
+                <option *ngFor="let job of recruitService.jobs()" [value]="job.id">
+                  Switch: {{ job.title }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-400">
+            Review, compare, and advance candidates who applied for this role. Experience required: <span class="text-slate-300 font-medium">{{ selectedJob()?.experienceRequired }}</span>.
+          </p>
+        </div>
+
+        <!-- Right: KPI summary & Close button -->
+        <div class="flex items-center gap-4 self-end lg:self-auto">
+          <!-- Quick Stats pills -->
+          <div class="hidden sm:flex items-center gap-2">
+            <div class="px-3 py-2 rounded-xl bg-slate-800/70 border border-slate-700/60 text-center">
+              <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Applicants</span>
+              <span class="text-sm font-extrabold text-white block">{{ displayedCandidates().length }}</span>
+            </div>
+            <div class="px-3 py-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-center">
+              <span class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider block">Shortlisted</span>
+              <span class="text-sm font-extrabold text-emerald-300 block">{{ countByStatus('shortlisted') }}</span>
+            </div>
+            <div class="px-3 py-2 rounded-xl bg-amber-950/40 border border-amber-500/30 text-center">
+              <span class="text-[10px] uppercase font-bold text-amber-400 tracking-wider block">Interviewing</span>
+              <span class="text-sm font-extrabold text-amber-300 block">{{ countByStatus('interviewing') }}</span>
+            </div>
+          </div>
+
+          <!-- Close Button -->
+          <button
+            (click)="recruitService.closeJobCandidatesModal()"
+            class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 border border-transparent hover:border-slate-700 transition-colors"
+            title="Close modal"
+          >
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Filter Toolbar -->
+      <div class="mt-5 pt-4 border-t border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        
+        <!-- Search bar within this role -->
+        <div class="relative flex-1 max-w-md">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Search candidates by name, skills, company..."
+            class="w-full bg-slate-950/70 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/70 transition-all"
+          />
+        </div>
+
+        <!-- Filter tabs & Sort -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Status filter buttons -->
+          <div class="flex items-center gap-1 bg-slate-950/70 p-1 rounded-xl border border-slate-800">
+            <button
+              (click)="statusFilter.set('all')"
+              [class]="statusFilter() === 'all'
+                ? 'px-3 py-1 rounded-lg bg-indigo-600 text-white font-semibold'
+                : 'px-3 py-1 rounded-lg text-slate-400 hover:text-white font-medium'"
+            >
+              All ({{ allJobCandidates().length }})
+            </button>
+            <button
+              (click)="statusFilter.set('shortlisted')"
+              [class]="statusFilter() === 'shortlisted'
+                ? 'px-3 py-1 rounded-lg bg-indigo-600 text-white font-semibold'
+                : 'px-3 py-1 rounded-lg text-slate-400 hover:text-white font-medium'"
+            >
+              Shortlisted
+            </button>
+            <button
+              (click)="statusFilter.set('interviewing')"
+              [class]="statusFilter() === 'interviewing'
+                ? 'px-3 py-1 rounded-lg bg-indigo-600 text-white font-semibold'
+                : 'px-3 py-1 rounded-lg text-slate-400 hover:text-white font-medium'"
+            >
+              In Interview
+            </button>
+            <button
+              (click)="statusFilter.set('new')"
+              [class]="statusFilter() === 'new'
+                ? 'px-3 py-1 rounded-lg bg-indigo-600 text-white font-semibold'
+                : 'px-3 py-1 rounded-lg text-slate-400 hover:text-white font-medium'"
+            >
+              New
+            </button>
+          </div>
+
+          <!-- Sort options -->
+          <div class="flex items-center gap-1.5 ml-auto md:ml-0">
+            <span class="text-slate-400 text-[11px] hidden sm:inline">Sort:</span>
+            <select
+              [(ngModel)]="sortBy"
+              class="bg-slate-950/70 border border-slate-800 text-slate-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer"
+            >
+              <option value="match">Highest Match Score</option>
+              <option value="experience">Experience (Years)</option>
+              <option value="recent">Recently Applied</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scrollable Candidates Body -->
+    <div class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+      
+      <div *ngIf="displayedCandidates().length > 0; else emptyCandidates">
+        <div class="grid grid-cols-1 gap-4">
+          
+          <!-- Candidate Card with ALL Details -->
+          <div
+            *ngFor="let candidate of displayedCandidates()"
+            class="glass-card rounded-2xl p-5 border border-slate-800/90 hover:border-indigo-500/50 transition-all relative overflow-hidden group"
+          >
+            <!-- Subtle background glow for high match -->
+            <div
+              *ngIf="candidate.matchScore >= 95"
+              class="absolute -right-10 -top-10 w-44 h-44 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"
+            ></div>
+
+            <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+              
+              <!-- Left: Profile & Key Info -->
+              <div class="flex items-start gap-4 flex-1">
+                <img
+                  [src]="candidate.avatar"
+                  [alt]="candidate.name"
+                  class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-indigo-500/30 shrink-0 shadow-lg"
+                />
+
+                <div class="space-y-1.5 min-w-0 flex-1">
+                  <!-- Name + Status + AI Match -->
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <h3
+                      (click)="recruitService.viewCandidate(candidate)"
+                      class="text-base sm:text-lg font-bold text-white group-hover:text-indigo-300 transition-colors cursor-pointer"
+                    >
+                      {{ candidate.name }}
+                    </h3>
+
+                    <!-- AI Match Badge -->
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      {{ candidate.matchScore }}% AI Match
+                    </span>
+
+                    <!-- Pipeline Status Badge -->
+                    <span
+                      [class]="candidate.status === 'interviewing'
+                        ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        : candidate.status === 'shortlisted'
+                        ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                        : 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700'"
+                    >
+                      {{ candidate.status === 'interviewing' ? 'In Interview Round' : candidate.status === 'shortlisted' ? 'Shortlisted' : 'New Applicant' }}
+                    </span>
+
+                    <span class="text-[11px] text-slate-400">
+                      Applied {{ candidate.appliedDate }}
+                    </span>
+                  </div>
+
+                  <!-- Role & Company -->
+                  <p class="text-xs font-semibold text-indigo-400">
+                    {{ candidate.role }} <span class="text-slate-400 font-normal">at {{ candidate.currentCompany }}</span>
+                  </p>
+
+                  <!-- Key Candidate Details Bar -->
+                  <div class="flex items-center gap-3 text-xs text-slate-300 flex-wrap pt-1">
+                    <span class="flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <strong class="text-white">{{ candidate.experienceYears }} Years Exp</strong>
+                    </span>
+
+                    <span>•</span>
+
+                    <span class="flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                      </svg>
+                      <span>{{ candidate.education }}</span>
+                    </span>
+
+                    <span>•</span>
+
+                    <span class="flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span>{{ candidate.location }}</span>
+                    </span>
+
+                    <span>•</span>
+
+                    <span class="text-emerald-400 font-semibold">
+                      Exp: {{ candidate.salaryExpectation }}
+                    </span>
+                  </div>
+
+                  <!-- Contact info line -->
+                  <div class="flex items-center gap-4 text-[11px] text-slate-400 pt-0.5">
+                    <span class="flex items-center gap-1">
+                      <svg class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      {{ candidate.email }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <svg class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                      {{ candidate.phone }}
+                    </span>
+                  </div>
+
+                  <!-- AI Copilot Executive Summary -->
+                  <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 leading-relaxed mt-2.5">
+                    <div class="flex items-center gap-1.5 mb-1 text-[11px] font-bold text-indigo-300 uppercase tracking-wider">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>AI Fit Evaluation</span>
+                    </div>
+                    <p class="italic text-[11px] text-slate-200">
+                      "{{ candidate.aiSummary }}"
+                    </p>
+                  </div>
+
+                  <!-- Skills Pills -->
+                  <div class="flex flex-wrap items-center gap-1.5 pt-2">
+                    <span class="text-[11px] font-semibold text-slate-400 mr-1">Skills:</span>
+                    <span
+                      *ngFor="let skill of candidate.skills"
+                      class="px-2.5 py-0.5 rounded-md bg-slate-800/90 text-slate-300 text-[11px] font-medium border border-slate-700/60 flex items-center gap-1"
+                    >
+                      <svg class="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      {{ skill }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Action Buttons Group -->
+              <div class="flex flex-wrap lg:flex-col items-center lg:items-end gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800/80">
+                
+                <!-- View Resume Button -->
+                <button
+                  (click)="recruitService.openResumeModal(candidate)"
+                  class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600/20 to-indigo-600/20 hover:from-blue-600 hover:to-indigo-600 text-blue-300 hover:text-white border border-blue-500/30 hover:border-transparent text-xs font-semibold shadow-sm transition-all flex items-center gap-2 group/btn"
+                  title="View candidate's complete ATS resume"
+                >
+                  <svg class="w-4 h-4 text-blue-400 group-hover/btn:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>View Resume</span>
+                </button>
+
+                <!-- Add to Compare Button -->
+                <button
+                  (click)="recruitService.toggleCompare(candidate)"
+                  [class]="recruitService.isInCompare(candidate.id)
+                    ? 'px-3.5 py-2 rounded-xl bg-emerald-600 text-white border border-emerald-500 text-xs font-semibold shadow-md shadow-emerald-600/30 transition-all flex items-center gap-2'
+                    : 'px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-600 text-xs font-semibold transition-all flex items-center gap-2'"
+                  [title]="recruitService.isInCompare(candidate.id) ? 'Remove candidate from compare list' : 'Add candidate to compare list'"
+                >
+                  <svg
+                    *ngIf="recruitService.isInCompare(candidate.id); else compareIcon"
+                    class="w-4 h-4 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <ng-template #compareIcon>
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </ng-template>
+                  <span>{{ recruitService.isInCompare(candidate.id) ? 'Added to Compare' : 'Add to Compare' }}</span>
+                </button>
+
+                <!-- Schedule Interview -->
+                <button
+                  (click)="scheduleCandidate(candidate)"
+                  class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm shadow-indigo-600/30 transition-all flex items-center gap-2"
+                  title="Schedule interview round for candidate"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Schedule Round</span>
+                </button>
+
+                <!-- Shortlist / Full details row -->
+                <div class="flex items-center gap-1.5 w-full justify-end">
+                  <button
+                    (click)="recruitService.toggleShortlist(candidate.id)"
+                    [class]="candidate.status === 'shortlisted' || candidate.status === 'interviewing'
+                      ? 'p-2 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all text-xs flex items-center gap-1'
+                      : 'p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-all text-xs flex items-center gap-1'"
+                    [title]="candidate.status === 'shortlisted' ? 'Remove from shortlist' : 'Shortlist candidate'"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                    <span>{{ candidate.status === 'shortlisted' ? 'Shortlisted' : 'Shortlist' }}</span>
+                  </button>
+
+                  <button
+                    (click)="recruitService.viewCandidate(candidate)"
+                    class="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-all text-xs"
+                    title="View profile modal"
+                  >
+                    Details
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <ng-template #emptyCandidates>
+        <div class="py-16 text-center rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center mx-auto">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <p class="text-sm font-bold text-white">No candidates match your current filter</p>
+          <p class="text-xs text-slate-400 max-w-sm mx-auto">
+            Try clearing your search query or switching the status filter tab to see all applicants for this opening.
+          </p>
+          <button
+            (click)="resetFilters()"
+            class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all inline-block mt-2"
+          >
+            Reset Filters
+          </button>
+        </div>
+      </ng-template>
+
+    </div>
+
+    <!-- Sticky Floating Comparison Banner at Bottom if 1+ selected -->
+    <div
+      *ngIf="recruitService.comparisonList().length > 0"
+      class="p-4 border-t border-slate-800 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0"
+    >
+      <div class="flex items-center gap-3">
+        <!-- Selected Avatars stacked -->
+        <div class="flex -space-x-2 overflow-hidden">
+          <img
+            *ngFor="let c of recruitService.comparisonList()"
+            [src]="c.avatar"
+            [alt]="c.name"
+            class="inline-block h-8 w-8 rounded-full ring-2 ring-indigo-500 object-cover"
+            [title]="c.name"
+          />
+        </div>
+        <div>
+          <span class="text-xs font-bold text-white">
+            {{ recruitService.comparisonList().length }} candidate{{ recruitService.comparisonList().length > 1 ? 's' : '' }} selected
+          </span>
+          <span class="text-[11px] text-indigo-300 block">
+            Compare side-by-side match score, experience, and competencies
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="recruitService.clearCompareList()"
+          class="px-3 py-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-medium transition-colors"
+        >
+          Clear
+        </button>
+
+        <button
+          (click)="recruitService.openCompareModal()"
+          class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span>Compare Candidates Now ({{ recruitService.comparisonList().length }})</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+

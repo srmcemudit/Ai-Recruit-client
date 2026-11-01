@@ -1,0 +1,109 @@
+<div
+  *ngIf="recruitService.selectedInterview() as interview"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+>
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <!-- Header -->
+    <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+      <div class="flex items-center gap-3.5">
+        <img
+          [src]="interview.candidateAvatar"
+          [alt]="interview.candidateName"
+          class="w-12 h-12 rounded-xl object-cover ring-2 ring-indigo-500/30"
+        />
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-bold text-white">{{ interview.candidateName }}</h3>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              {{ interview.roundType }}
+            </span>
+          </div>
+          <p class="text-xs text-indigo-400 font-medium">{{ interview.jobTitle }}</p>
+        </div>
+      </div>
+      <button
+        (click)="recruitService.closeInterviewModal()"
+        class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-5 overflow-y-auto text-xs">
+      <!-- Time & Platform Grid -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
+          <span class="text-slate-400 font-medium block text-[11px] mb-1">Time & Date</span>
+          <div class="text-white font-bold text-sm">{{ interview.startTime }} - {{ interview.endTime }}</div>
+          <div class="text-indigo-400 text-xs mt-0.5">{{ interview.date | date:'EEEE, MMMM d, y' }}</div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
+          <span class="text-slate-400 font-medium block text-[11px] mb-1">Platform</span>
+          <div class="text-white font-bold text-sm">{{ interview.platform }}</div>
+          <div class="text-slate-400 text-xs mt-0.5">Host: {{ interview.interviewer }}</div>
+        </div>
+      </div>
+
+      <!-- Meeting Link Bar -->
+      <div *ngIf="interview.meetingLink" class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between">
+        <div class="flex items-center gap-2 overflow-hidden">
+          <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          <span class="text-slate-300 font-mono text-[11px] truncate">{{ interview.meetingLink }}</span>
+        </div>
+        <a
+          [href]="interview.meetingLink"
+          target="_blank"
+          class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-[11px] shrink-0 transition-colors ml-2"
+        >
+          Launch
+        </a>
+      </div>
+
+      <!-- AI Interview Prep & Suggested Questions -->
+      <div>
+        <div class="flex items-center gap-2 mb-2.5">
+          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-300">AI-Generated Assessment Prompts</h4>
+        </div>
+
+        <div class="space-y-2">
+          <div
+            *ngFor="let focus of interview.aiSuggestedFocus; let i = index"
+            class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60 flex items-start gap-2.5"
+          >
+            <span class="w-5 h-5 rounded-full bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+              {{ i + 1 }}
+            </span>
+            <p class="text-slate-200 text-xs leading-relaxed font-medium">{{ focus }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="p-5 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
+      <button
+        (click)="recruitService.closeInterviewModal()"
+        class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
+      >
+        Close
+      </button>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="recruitService.closeInterviewModal()"
+          class="px-4 py-2 rounded-xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-600/30 font-semibold text-xs transition-all"
+        >
+          Mark Completed
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

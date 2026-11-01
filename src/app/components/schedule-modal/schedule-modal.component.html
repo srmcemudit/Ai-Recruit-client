@@ -1,0 +1,182 @@
+<div
+  *ngIf="recruitService.isScheduleModalOpen()"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+>
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <!-- Header -->
+    <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Schedule Interview</h3>
+          <p class="text-xs text-slate-400">Add an interview to the weekly timeline</p>
+        </div>
+      </div>
+      <button
+        (click)="recruitService.closeScheduleModal()"
+        class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Form Body -->
+    <form (ngSubmit)="submit()" class="p-6 space-y-4 overflow-y-auto text-xs">
+      <!-- Candidate Selection -->
+      <div>
+        <label class="block text-slate-300 font-semibold mb-1.5">Candidate</label>
+        <select
+          [(ngModel)]="selectedCandidateId"
+          name="candidateId"
+          class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+          required
+        >
+          <option *ngFor="let cand of recruitService.candidates()" [value]="cand.id">
+            {{ cand.name }} — {{ cand.role }} ({{ cand.matchScore }}% AI Match)
+          </option>
+        </select>
+      </div>
+
+      <!-- Date & Time Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Date</label>
+          <input
+            type="date"
+            [(ngModel)]="interviewDate"
+            name="interviewDate"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Start Time</label>
+          <input
+            type="text"
+            [(ngModel)]="startTime"
+            name="startTime"
+            placeholder="10:00 AM"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">End Time</label>
+          <input
+            type="text"
+            [(ngModel)]="endTime"
+            name="endTime"
+            placeholder="11:00 AM"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Round Type & Platform -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Interview Round</label>
+          <select
+            [(ngModel)]="roundType"
+            name="roundType"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+          >
+            <option value="Screening">HR Screening</option>
+            <option value="Technical Round">Technical Round</option>
+            <option value="System Architecture">System Architecture</option>
+            <option value="Culture Fit">Culture Fit</option>
+            <option value="Final Executive">Final Executive</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Meeting Platform</label>
+          <select
+            [(ngModel)]="platform"
+            name="platform"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+          >
+            <option value="Google Meet">Google Meet</option>
+            <option value="Zoom">Zoom</option>
+            <option value="Microsoft Teams">Microsoft Teams</option>
+            <option value="On-site">On-site</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Interviewer Details -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Lead Interviewer</label>
+          <input
+            type="text"
+            [(ngModel)]="interviewer"
+            name="interviewer"
+            placeholder="e.g. Jason Blake"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+          />
+        </div>
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Interviewer Role</label>
+          <input
+            type="text"
+            [(ngModel)]="interviewerRole"
+            name="interviewerRole"
+            placeholder="e.g. VP of Engineering"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+          />
+        </div>
+      </div>
+
+      <!-- Meeting Link -->
+      <div>
+        <label class="block text-slate-300 font-semibold mb-1.5">Meeting Link / Location</label>
+        <input
+          type="text"
+          [(ngModel)]="meetingLink"
+          name="meetingLink"
+          placeholder="https://meet.google.com/xyz-abc-def"
+          class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+        />
+      </div>
+
+      <!-- AI Focus Suggestion -->
+      <div class="p-3 bg-indigo-950/30 border border-indigo-500/20 rounded-xl">
+        <span class="text-indigo-300 font-semibold flex items-center gap-1.5 mb-1">
+          <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          AI Smart Note
+        </span>
+        <p class="text-[11px] text-slate-400">
+          The AI copilot will generate specialized technical assessment questions based on the candidate's resume and job requirements once scheduled.
+        </p>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="pt-4 border-t border-slate-800 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          (click)="recruitService.closeScheduleModal()"
+          class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition-all"
+        >
+          Confirm & Add to Schedule
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

@@ -1,0 +1,293 @@
+<div
+  *ngIf="recruitService.isResumeModalOpen() && recruitService.selectedResumeCandidate() as candidate"
+  class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-md overflow-hidden animate-fadeIn"
+>
+  <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+    
+    <!-- Modal Top Bar -->
+    <div class="p-4 sm:p-5 border-b border-slate-800 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 flex items-center justify-between gap-4 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center shadow-md">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-base sm:text-lg font-bold text-white tracking-tight">Verified Candidate Resume</h3>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              ATS Verified
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Curriculum Vitae & Verified Credentials for {{ candidate.name }}</p>
+        </div>
+      </div>
+
+      <!-- Actions: Download, Print, Close -->
+      <div class="flex items-center gap-2">
+        <!-- Download Button -->
+        <button
+          (click)="downloadResume(candidate)"
+          class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all"
+          title="Download PDF"
+        >
+          <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span class="hidden sm:inline">{{ isDownloading() ? 'Downloading...' : 'Download PDF' }}</span>
+        </button>
+
+        <!-- Close Button -->
+        <button
+          (click)="recruitService.closeResumeModal()"
+          class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors"
+          title="Close resume"
+        >
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Download Feedback Toast -->
+    <div
+      *ngIf="showToast()"
+      class="bg-emerald-600 text-white text-xs px-4 py-2 font-medium flex items-center justify-between animate-fadeIn shrink-0"
+    >
+      <span>Resume for {{ candidate.name }} downloaded successfully.</span>
+      <button (click)="showToast.set(false)" class="text-white font-bold ml-2">✕</button>
+    </div>
+
+    <!-- Scrollable Resume Document Area -->
+    <div class="flex-1 overflow-y-auto p-5 sm:p-8 bg-slate-950/60">
+      
+      <!-- Styled Resume Paper Container -->
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-xl max-w-3xl mx-auto space-y-7">
+        
+        <!-- Resume Header Section -->
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-slate-800">
+          <div class="space-y-1">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              {{ candidate.name }}
+            </h1>
+            <p class="text-base font-semibold text-indigo-400">
+              {{ candidate.role }}
+            </p>
+            <p class="text-xs text-slate-400">
+              Current: <strong class="text-slate-200">{{ candidate.currentCompany }}</strong> • {{ candidate.experienceYears }} Years Experience
+            </p>
+          </div>
+
+          <!-- Match Gauge / ATS Rating -->
+          <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2">
+            <div class="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-right">
+              <div class="text-[10px] uppercase font-bold text-emerald-400">ATS Match Score</div>
+              <div class="text-lg font-black text-white">{{ candidate.matchScore }} / 100</div>
+            </div>
+            <span class="text-[11px] text-slate-400">Ranked Top 2%</span>
+          </div>
+        </div>
+
+        <!-- Contact & Online Profiles Ribbon -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-xs text-slate-300 p-3.5 rounded-xl bg-slate-800/40 border border-slate-800">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span class="truncate">{{ candidate.email }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            <span>{{ candidate.phone }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>{{ candidate.location }}</span>
+          </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="space-y-2">
+          <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Professional Summary
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed bg-slate-800/20 p-4 rounded-xl border border-slate-800">
+            {{ resume(candidate).summary }}
+          </p>
+        </div>
+
+        <!-- AI Copilot Insights -->
+        <div class="p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-indigo-300 flex items-center gap-1.5 uppercase tracking-wider">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              AI Screening Assessment
+            </span>
+            <span class="text-[11px] text-emerald-400 font-semibold">Strong Candidate Match</span>
+          </div>
+          <p class="text-xs text-slate-200 leading-relaxed">
+            {{ candidate.aiSummary }}
+          </p>
+        </div>
+
+        <!-- Work Experience Section -->
+        <div class="space-y-4">
+          <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Professional Experience
+          </h2>
+
+          <div class="space-y-5">
+            <div
+              *ngFor="let exp of resume(candidate).experience"
+              class="space-y-2 border-l-2 border-indigo-500/40 pl-4 py-0.5"
+            >
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <div>
+                  <h3 class="text-sm font-bold text-white">{{ exp.role }}</h3>
+                  <p class="text-xs font-medium text-indigo-400">{{ exp.company }} • {{ exp.location }}</p>
+                </div>
+                <span class="text-xs font-semibold text-slate-400 px-2.5 py-0.5 rounded-lg bg-slate-800 self-start sm:self-auto">
+                  {{ exp.period }}
+                </span>
+              </div>
+
+              <ul class="list-disc list-outside text-xs text-slate-300 space-y-1.5 ml-4">
+                <li *ngFor="let bullet of exp.highlights" class="leading-relaxed">
+                  {{ bullet }}
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Technical Skills Matrix -->
+        <div class="space-y-3">
+          <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Core Competencies & Technical Skills
+          </h2>
+
+          <div class="space-y-3">
+            <div
+              *ngFor="let cat of resume(candidate).skillsByCategory"
+              class="p-3.5 rounded-xl bg-slate-800/40 border border-slate-800 space-y-2"
+            >
+              <span class="text-xs font-semibold text-slate-300 block">{{ cat.category }}</span>
+              <div class="flex flex-wrap gap-1.5">
+                <span
+                  *ngFor="let s of cat.skills"
+                  class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5"
+                >
+                  <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  {{ s }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Education & Credentials -->
+        <div class="space-y-3">
+          <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Education & Credentials
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div
+              *ngFor="let edu of resume(candidate).education"
+              class="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1"
+            >
+              <h3 class="text-xs font-bold text-white">{{ edu.degree }}</h3>
+              <p class="text-xs text-indigo-400">{{ edu.institution }}</p>
+              <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                <span>Class of {{ edu.year }}</span>
+                <span *ngIf="edu.honors" class="text-emerald-400 font-medium">{{ edu.honors }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certifications & Publications if any -->
+        <div *ngIf="resume(candidate).certifications?.length || resume(candidate).publications?.length" class="space-y-3">
+          <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Honors, Certifications & Publications
+          </h2>
+
+          <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-2 text-xs text-slate-300">
+            <div *ngFor="let cert of resume(candidate).certifications" class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>{{ cert }}</span>
+            </div>
+            <div *ngFor="let pub of resume(candidate).publications" class="flex items-center gap-2 italic">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+              <span>{{ pub }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer Actions Bar -->
+    <div class="p-4 sm:p-5 border-t border-slate-800 bg-slate-900/90 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <!-- Left: Compare status -->
+      <button
+        (click)="recruitService.toggleCompare(candidate)"
+        [class]="recruitService.isInCompare(candidate.id)
+          ? 'px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold text-xs flex items-center gap-2 shadow-md shadow-emerald-600/30 transition-all'
+          : 'px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 flex items-center gap-2 transition-all'"
+      >
+        <svg
+          *ngIf="recruitService.isInCompare(candidate.id); else compIcon"
+          class="w-4 h-4 text-white"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <ng-template #compIcon>
+          <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </ng-template>
+        <span>{{ recruitService.isInCompare(candidate.id) ? 'In Compare List' : 'Add to Compare List' }}</span>
+      </button>
+
+      <!-- Right: Schedule & Shortlist -->
+      <div class="flex items-center gap-2">
+        <button
+          (click)="recruitService.toggleShortlist(candidate.id)"
+          class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
+        >
+          {{ candidate.status === 'shortlisted' ? 'Remove from Shortlist' : 'Add to Shortlist' }}
+        </button>
+
+        <button
+          (click)="scheduleCandidate(candidate)"
+          class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition-all flex items-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>Schedule Interview</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+

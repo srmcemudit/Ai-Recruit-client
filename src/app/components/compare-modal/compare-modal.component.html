@@ -1,0 +1,221 @@
+<div
+  *ngIf="recruitService.isCompareModalOpen()"
+  class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-md overflow-hidden animate-fadeIn"
+>
+  <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-6xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+    
+    <!-- Header -->
+    <div class="p-5 sm:p-6 border-b border-slate-800 bg-gradient-to-r from-slate-900 via-indigo-950/50 to-slate-900 flex items-center justify-between gap-4 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center shadow-md">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-base sm:text-lg font-bold text-white tracking-tight">Candidate Side-by-Side Comparison</h3>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              {{ recruitService.comparisonList().length }} Candidates
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Evaluate credentials, AI match ratings, competencies, and compensation side-by-side</p>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex items-center gap-2">
+        <button
+          *ngIf="recruitService.comparisonList().length > 0"
+          (click)="recruitService.clearCompareList()"
+          class="px-3 py-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-medium transition-colors"
+        >
+          Clear Comparison
+        </button>
+
+        <button
+          (click)="recruitService.closeCompareModal()"
+          class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors"
+          title="Close modal"
+        >
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Scrollable Comparison Content -->
+    <div class="flex-1 overflow-y-auto overflow-x-auto p-5 sm:p-6">
+      
+      <div *ngIf="recruitService.comparisonList().length > 0; else emptyCompareState">
+        
+        <!-- Comparison Matrix -->
+        <div class="min-w-[650px] space-y-6">
+          
+          <!-- Cards Columns Grid -->
+          <div
+            class="grid gap-4"
+            [style.grid-template-columns]="'repeat(' + recruitService.comparisonList().length + ', minmax(260px, 1fr))'"
+          >
+            <!-- Candidate Column Item -->
+            <div
+              *ngFor="let candidate of recruitService.comparisonList()"
+              class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between space-y-4 relative"
+            >
+              <!-- Remove from compare pill -->
+              <button
+                (click)="recruitService.removeFromCompare(candidate.id)"
+                class="absolute top-3 right-3 text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+                title="Remove candidate from comparison"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              <!-- Top Profile Header -->
+              <div class="flex items-start gap-3.5 pr-6">
+                <img
+                  [src]="candidate.avatar"
+                  [alt]="candidate.name"
+                  class="w-14 h-14 rounded-2xl object-cover ring-2 ring-indigo-500/40 shrink-0"
+                />
+                <div class="min-w-0">
+                  <h4 class="text-base font-bold text-white truncate">{{ candidate.name }}</h4>
+                  <p class="text-xs font-semibold text-indigo-400 truncate">{{ candidate.role }}</p>
+                  <p class="text-[11px] text-slate-400 truncate">{{ candidate.currentCompany }}</p>
+                </div>
+              </div>
+
+              <!-- AI Match Score Comparison Gauge -->
+              <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-400">AI Match Rating</span>
+                  <span class="font-extrabold text-emerald-300">{{ candidate.matchScore }}%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                  <div
+                    class="bg-gradient-to-r from-emerald-500 to-indigo-500 h-2 rounded-full"
+                    [style.width.%]="candidate.matchScore"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Details Row 1: Experience & Salary -->
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="p-3 rounded-xl bg-slate-800/50 border border-slate-700/60">
+                  <span class="text-[11px] text-slate-400 block">Experience</span>
+                  <strong class="text-white text-xs block mt-0.5">{{ candidate.experienceYears }} Years</strong>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-800/50 border border-slate-700/60">
+                  <span class="text-[11px] text-slate-400 block">Expectation</span>
+                  <strong class="text-emerald-400 text-xs block mt-0.5 truncate">{{ candidate.salaryExpectation }}</strong>
+                </div>
+              </div>
+
+              <!-- Details Row 2: Education & Location -->
+              <div class="space-y-2 text-xs">
+                <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
+                  <span class="text-[11px] text-slate-400 block">Education</span>
+                  <span class="text-slate-200 font-medium block mt-0.5">{{ candidate.education }}</span>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
+                  <span class="text-[11px] text-slate-400 block">Location & Preference</span>
+                  <span class="text-slate-200 font-medium block mt-0.5">{{ candidate.location }}</span>
+                </div>
+              </div>
+
+              <!-- Skills Tags -->
+              <div class="space-y-1.5">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Key Verified Skills</span>
+                <div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                  <span
+                    *ngFor="let skill of candidate.skills"
+                    class="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-medium"
+                  >
+                    {{ skill }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- AI Fit Summary -->
+              <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-xs space-y-1">
+                <span class="text-[10px] uppercase font-bold text-indigo-400 block tracking-wider">AI Executive Assessment</span>
+                <p class="text-slate-200 italic text-[11px] leading-relaxed line-clamp-4">
+                  "{{ candidate.aiSummary }}"
+                </p>
+              </div>
+
+              <!-- Bottom Column Action Buttons -->
+              <div class="pt-3 border-t border-slate-800 space-y-2 mt-auto">
+                <!-- View Resume -->
+                <button
+                  (click)="viewResume(candidate)"
+                  class="w-full py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <svg class="w-4 h-4 text-blue-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>View Resume</span>
+                </button>
+
+                <!-- Schedule Interview -->
+                <button
+                  (click)="scheduleCandidate(candidate)"
+                  class="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Schedule Interview</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Empty Compare State -->
+      <ng-template #emptyCompareState>
+        <div class="py-16 text-center rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center mx-auto">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <p class="text-sm font-bold text-white">No candidates selected for comparison</p>
+          <p class="text-xs text-slate-400 max-w-sm mx-auto">
+            Click "Add to Compare" on any candidate in the job candidates list or talent pool to compare up to 4 candidates side-by-side.
+          </p>
+          <button
+            (click)="recruitService.closeCompareModal()"
+            class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all inline-block mt-2"
+          >
+            Return to Candidates
+          </button>
+        </div>
+      </ng-template>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="p-4 sm:p-5 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between gap-3 shrink-0">
+      <span class="text-xs text-slate-400">
+        Tip: You can compare up to 4 candidates simultaneously.
+      </span>
+      <button
+        (click)="recruitService.closeCompareModal()"
+        class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
+      >
+        Close Comparison
+      </button>
+    </div>
+
+  </div>
+</div>
+
